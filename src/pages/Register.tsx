@@ -7,47 +7,68 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { ArrowLeft, Loader2 } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+
+// Define schema for form validation
+const registerSchema = z.object({
+  name: z.string().min(2, { message: "Name must be at least 2 characters" }),
+  email: z.string().email({ message: "Please enter a valid email" }),
+  password: z.string().min(8, { message: "Password must be at least 8 characters" }),
+  confirmPassword: z.string()
+}).refine(data => data.password === data.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"]
+});
+
+type RegisterFormValues = z.infer<typeof registerSchema>;
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 const Register: React.FC = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
+  
+  // Initialize react-hook-form
+  const form = useForm<RegisterFormValues>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      password: "",
+      confirmPassword: ""
+    }
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Basic validation
-    if (!formData.name || !formData.email || !formData.password) {
-      toast.error("Please fill in all required fields");
-      return;
-    }
-    
-    if (formData.password !== formData.confirmPassword) {
-      toast.error("Passwords do not match");
-      return;
-    }
-    
-    // Simulate registration process
+  const onSubmit = async (data: RegisterFormValues) => {
     setIsLoading(true);
     
     try {
-      // For demonstration purposes - in a real app, this would call an API
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const response = await fetch(`${API_URL}/api/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          name: data.name,
+          email: data.email,
+          password: data.password
+        })
+      });
+      
+      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.message || 'Registration failed');
+      }
       
       toast.success("Account created successfully!");
       navigate("/lesson");
     } catch (error) {
-      toast.error("Failed to create account. Please try again.");
+      console.error("Registration error:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to create account. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -74,84 +95,106 @@ const Register: React.FC = () => {
                 <p className="text-gray-600">Join TeachifyAI to start your AI learning journey</p>
               </div>
               
-              <form onSubmit={handleSubmit} className="space-y-5">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Full Name</Label>
-                  <Input
-                    id="name"
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+                  <FormField
+                    control={form.control}
                     name="name"
-                    placeholder="Enter your name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    required
-                    className="h-12"
+                    render={({ field }) => (
+                      <FormItem className="space-y-2">
+                        <FormLabel>Full Name</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            placeholder="Enter your name"
+                            className="h-12"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
+                  
+                  <FormField
+                    control={form.control}
                     name="email"
-                    type="email"
-                    placeholder="Enter your email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    required
-                    className="h-12"
+                    render={({ field }) => (
+                      <FormItem className="space-y-2">
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            type="email"
+                            placeholder="Enter your email"
+                            className="h-12"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
-                  <Input
-                    id="password"
+                  
+                  <FormField
+                    control={form.control}
                     name="password"
-                    type="password"
-                    placeholder="Create a password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    required
-                    className="h-12"
+                    render={({ field }) => (
+                      <FormItem className="space-y-2">
+                        <FormLabel>Password</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            type="password"
+                            placeholder="Create a password"
+                            className="h-12"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirm Password</Label>
-                  <Input
-                    id="confirmPassword"
+                  
+                  <FormField
+                    control={form.control}
                     name="confirmPassword"
-                    type="password"
-                    placeholder="Confirm your password"
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
-                    required
-                    className="h-12"
+                    render={({ field }) => (
+                      <FormItem className="space-y-2">
+                        <FormLabel>Confirm Password</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            type="password"
+                            placeholder="Confirm your password"
+                            className="h-12"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                </div>
-                
-                <Button
-                  type="submit"
-                  className="w-full h-12 text-base font-medium bg-primary hover:bg-primary/90"
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Creating account...
-                    </>
-                  ) : (
-                    "Create Account"
-                  )}
-                </Button>
-                
-                <div className="text-center text-sm text-gray-600">
-                  By signing up, you agree to our{" "}
-                  <Link to="/" className="text-primary hover:underline">Terms of Service</Link>
-                  {" "}and{" "}
-                  <Link to="/" className="text-primary hover:underline">Privacy Policy</Link>
-                </div>
-              </form>
+                  
+                  <Button
+                    type="submit"
+                    className="w-full h-12 text-base font-medium bg-primary hover:bg-primary/90"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Creating account...
+                      </>
+                    ) : (
+                      "Create Account"
+                    )}
+                  </Button>
+                  
+                  <div className="text-center text-sm text-gray-600">
+                    By signing up, you agree to our{" "}
+                    <Link to="/" className="text-primary hover:underline">Terms of Service</Link>
+                    {" "}and{" "}
+                    <Link to="/" className="text-primary hover:underline">Privacy Policy</Link>
+                  </div>
+                </form>
+              </Form>
               
               <div className="mt-8 text-center text-sm text-gray-600">
                 Already have an account?{" "}

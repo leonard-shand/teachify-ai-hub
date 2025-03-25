@@ -8,45 +8,70 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { ArrowLeft, Loader2 } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+
+// Define schema for form validation
+const loginSchema = z.object({
+  email: z.string().email({ message: "Please enter a valid email" }),
+  password: z.string().min(1, { message: "Password is required" }),
+  rememberMe: z.boolean().default(false)
+});
+
+type LoginFormValues = z.infer<typeof loginSchema>;
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-    rememberMe: false,
+  
+  // Initialize react-hook-form
+  const form = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+      rememberMe: false
+    }
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleCheckboxChange = (checked: boolean) => {
-    setFormData(prev => ({ ...prev, rememberMe: checked }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Basic validation
-    if (!formData.email || !formData.password) {
-      toast.error("Please enter both email and password");
-      return;
-    }
-    
-    // Simulate login process
+  const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
     
     try {
-      // For demonstration purposes - in a real app, this would call an API
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const response = await fetch(`${API_URL}/api/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email: data.email,
+          password: data.password
+        })
+      });
+      
+      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.message || 'Login failed');
+      }
+      
+      // Save user data in localStorage if rememberMe is checked
+      if (data.rememberMe) {
+        localStorage.setItem('user', JSON.stringify(result.user));
+      } else {
+        // Use sessionStorage for session-only storage
+        sessionStorage.setItem('user', JSON.stringify(result.user));
+      }
       
       toast.success("Logged in successfully!");
       navigate("/lesson");
     } catch (error) {
-      toast.error("Invalid email or password. Please try again.");
+      console.error("Login error:", error);
+      toast.error(error instanceof Error ? error.message : "Invalid email or password. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -73,72 +98,90 @@ const Login: React.FC = () => {
                 <p className="text-gray-600">Sign in to your TeachifyAI account</p>
               </div>
               
-              <form onSubmit={handleSubmit} className="space-y-5">
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+                  <FormField
+                    control={form.control}
                     name="email"
-                    type="email"
-                    placeholder="Enter your email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    required
-                    className="h-12"
+                    render={({ field }) => (
+                      <FormItem className="space-y-2">
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            type="email"
+                            placeholder="Enter your email"
+                            className="h-12"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                </div>
-                
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <Label htmlFor="password">Password</Label>
-                    <Link 
-                      to="/" 
-                      className="text-sm text-primary hover:underline"
-                    >
-                      Forgot password?
-                    </Link>
-                  </div>
-                  <Input
-                    id="password"
+                  
+                  <FormField
+                    control={form.control}
                     name="password"
-                    type="password"
-                    placeholder="Enter your password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    required
-                    className="h-12"
+                    render={({ field }) => (
+                      <FormItem className="space-y-2">
+                        <div className="flex justify-between items-center">
+                          <FormLabel>Password</FormLabel>
+                          <Link 
+                            to="/" 
+                            className="text-sm text-primary hover:underline"
+                          >
+                            Forgot password?
+                          </Link>
+                        </div>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            type="password"
+                            placeholder="Enter your password"
+                            className="h-12"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                </div>
-                
-                <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="rememberMe" 
-                    checked={formData.rememberMe}
-                    onCheckedChange={handleCheckboxChange}
+                  
+                  <FormField
+                    control={form.control}
+                    name="rememberMe"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel className="text-sm text-gray-600 cursor-pointer">
+                            Remember me for 30 days
+                          </FormLabel>
+                        </div>
+                      </FormItem>
+                    )}
                   />
-                  <label
-                    htmlFor="rememberMe"
-                    className="text-sm text-gray-600 cursor-pointer"
+                  
+                  <Button
+                    type="submit"
+                    className="w-full h-12 text-base font-medium bg-primary hover:bg-primary/90"
+                    disabled={isLoading}
                   >
-                    Remember me for 30 days
-                  </label>
-                </div>
-                
-                <Button
-                  type="submit"
-                  className="w-full h-12 text-base font-medium bg-primary hover:bg-primary/90"
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Signing in...
-                    </>
-                  ) : (
-                    "Sign In"
-                  )}
-                </Button>
-              </form>
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Signing in...
+                      </>
+                    ) : (
+                      "Sign In"
+                    )}
+                  </Button>
+                </form>
+              </Form>
               
               <div className="mt-8 text-center text-sm text-gray-600">
                 Don't have an account?{" "}

@@ -21,7 +21,7 @@ export default defineConfig(({ mode }) => ({
     },
   },
   // Update base configuration for production
-  base: '', // Use empty string for relative paths
+  base: '',  // Empty string for relative paths
   build: {
     outDir: "dist",
     assetsDir: "assets",

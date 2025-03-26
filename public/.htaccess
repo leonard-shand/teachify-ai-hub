@@ -16,9 +16,40 @@
   AddType text/javascript js
   AddType application/json json
   AddType text/css css
+  AddType text/html html htm
+  AddType image/svg+xml svg svgz
+  AddType application/font-woff woff
+  AddType application/font-woff2 woff2
+  AddType application/vnd.ms-fontobject eot
+  AddType application/x-font-ttf ttf
+  AddType image/x-icon ico
 </IfModule>
 
-# Enable CORS
+# Force correct content types regardless of server configuration
 <IfModule mod_headers.c>
+  <FilesMatch "\.js$">
+    Header set Content-Type "application/javascript"
+  </FilesMatch>
+  <FilesMatch "\.tsx?$">
+    Header set Content-Type "application/javascript"
+  </FilesMatch>
+  <FilesMatch "\.json$">
+    Header set Content-Type "application/json"
+  </FilesMatch>
+  <FilesMatch "\.css$">
+    Header set Content-Type "text/css"
+  </FilesMatch>
+  
+  # Enable CORS
   Header set Access-Control-Allow-Origin "*"
 </IfModule>
+
+# If you're in a subdirectory, uncomment and update this:
+# <IfModule mod_rewrite.c>
+#   RewriteEngine On
+#   RewriteBase /teachifyai/
+#   RewriteRule ^index\.html$ - [L]
+#   RewriteCond %{REQUEST_FILENAME} !-f
+#   RewriteCond %{REQUEST_FILENAME} !-d
+#   RewriteRule . /teachifyai/index.html [L]
+# </IfModule>

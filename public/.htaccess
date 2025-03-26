@@ -11,6 +11,8 @@
 
 # Set correct MIME types
 <IfModule mod_mime.c>
+  AddType application/javascript js
+  AddType application/javascript mjs
   AddType text/javascript js
   AddType application/json json
   AddType text/css css

@@ -20,12 +20,11 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  // Add base configuration for production
-  base: "./",
+  // Update base configuration for production
+  base: '', // Use empty string for relative paths
   build: {
     outDir: "dist",
     assetsDir: "assets",
-    // Generate a .htaccess file for Apache to handle SPA routing
     emptyOutDir: true,
     rollupOptions: {
       output: {

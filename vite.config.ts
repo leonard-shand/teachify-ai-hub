@@ -21,13 +21,16 @@ export default defineConfig(({ mode }) => ({
     },
   },
   // Update base configuration for production
-  base: '',  // Empty string for relative paths
+  base: '/teachifyai/',  // Update to match your subdirectory
   build: {
     outDir: "dist",
     assetsDir: "assets",
     emptyOutDir: true,
     rollupOptions: {
       output: {
+        entryFileNames: 'assets/[name].js',
+        chunkFileNames: 'assets/[name]-[hash].js',
+        assetFileNames: 'assets/[name]-[hash].[ext]',
         manualChunks: {
           vendor: ['react', 'react-dom', 'react-router-dom'],
         },

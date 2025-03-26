@@ -13,7 +13,13 @@
 <IfModule mod_mime.c>
   AddType application/javascript js
   AddType application/javascript mjs
+  AddType application/javascript jsx
+  AddType application/javascript ts
+  AddType application/javascript tsx
   AddType text/javascript js
+  AddType text/javascript jsx
+  AddType text/javascript ts
+  AddType text/javascript tsx
   AddType application/json json
   AddType text/css css
   AddType text/html html htm
@@ -27,10 +33,7 @@
 
 # Force correct content types regardless of server configuration
 <IfModule mod_headers.c>
-  <FilesMatch "\.js$">
-    Header set Content-Type "application/javascript"
-  </FilesMatch>
-  <FilesMatch "\.tsx?$">
+  <FilesMatch "\.(js|jsx|ts|tsx)$">
     Header set Content-Type "application/javascript"
   </FilesMatch>
   <FilesMatch "\.json$">
@@ -44,12 +47,12 @@
   Header set Access-Control-Allow-Origin "*"
 </IfModule>
 
-# If you're in a subdirectory, uncomment and update this:
-# <IfModule mod_rewrite.c>
-#   RewriteEngine On
-#   RewriteBase /teachifyai/
-#   RewriteRule ^index\.html$ - [L]
-#   RewriteCond %{REQUEST_FILENAME} !-f
-#   RewriteCond %{REQUEST_FILENAME} !-d
-#   RewriteRule . /teachifyai/index.html [L]
-# </IfModule>
+# If you're in a subdirectory, uncomment and modify this:
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /teachifyai/
+  RewriteRule ^index\.html$ - [L]
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule . /teachifyai/index.html [L]
+</IfModule>

@@ -11,6 +11,14 @@ const Index: React.FC = () => {
   return (
     <div className="min-h-screen">
       <NavBar />
+      
+      {/* Welcome Banner */}
+      <div className="bg-gradient-to-r from-blue-500 to-indigo-600 py-2">
+        <div className="container mx-auto px-4">
+          <h1 className="text-white text-center font-display font-bold">Welcome to Teachify!</h1>
+        </div>
+      </div>
+      
       <Hero />
 
       {/* Features section */}
